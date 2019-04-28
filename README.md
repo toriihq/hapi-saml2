@@ -9,6 +9,12 @@ This plugin based on [passport-saml](https://github.com/bergie/passport-saml) an
 
 Check the documentation of the repository for `options` documentation
 
+## Versions
+
+Hapi v18 support: use version from 1.0.0
+
+Hapi v17 support: use versions up to 0.0.4
+
 
 ## Usage
 
@@ -32,8 +38,8 @@ const init = async () => {
     plugin: require('hapi-saml2'),
     options: {
       getSAMLOptions: (request) => {}, // required. should return options for `passport-saml`
-      login: async (request, identifier) => {} // required. should return true if user is authenticated and authenticate user based on identifier (Profile.nameID is used)
-      logout: async (request) => {} // required. should logout the user on the app
+      login: async (request, identifier) => {}, // required. should return true if user is authenticated and authenticate user based on identifier (Profile.nameID is used)
+      logout: async (request) => {}, // required. should logout the user on the app
       apiPrefix: '/saml', // prefix for added routes
       redirectUrlAfterSuccess: '/', // url to redirect to after successful login
       redirectUrlAfterFailure: '/' // url to redirect to after failed login
