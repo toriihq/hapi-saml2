@@ -13,7 +13,7 @@ Check the documentation of the repository for `options` documentation
 
 Hapi v18 support: use version from 1.0.0
 
-Hapi v17 support: use versions up to 0.0.4
+Hapi v17 support: use versions up to 0.0.5
 
 
 ## Usage
