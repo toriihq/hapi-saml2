@@ -1,12 +1,12 @@
 {
   "name": "hapi-saml2",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SAML Auth for Hapi.js",
   "main": "./lib/index.js",
   "author": "Tal Bereznitskey <berzniz@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "passport-saml": "^1.0.0"
+    "passport-saml": "^0.33.0"
   },
   "peerDependencies": {
     "@hapi/boom": "^7.2.0",
