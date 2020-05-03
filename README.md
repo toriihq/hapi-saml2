@@ -42,7 +42,9 @@ const init = async () => {
       logout: async (request) => {}, // required. should logout the user on the app
       apiPrefix: '/saml', // prefix for added routes
       redirectUrlAfterSuccess: '/', // url to redirect to after successful login
-      redirectUrlAfterFailure: '/' // url to redirect to after failed login
+      redirectUrlAfterFailure: '/', // url to redirect to after failed login
+      boomErrorForMissingConfiguration: Boom.badImplementation('SAML instance is not configured'), // Boom error to throw on missing configuration error
+      boomErrorForIncorrectConfiguration: Boom.badImplementation('SAML configuration is incorrect') // Boom error to throw on incorrect configuration error
     }
   })
 
