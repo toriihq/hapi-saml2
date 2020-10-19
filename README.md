@@ -11,6 +11,8 @@ Check the documentation of the repository for `options` documentation
 
 ## Versions
 
+From version 1.3.5, the version is the same as the version of `passport-saml`.
+
 Hapi v18 support: use version from 1.0.0
 
 Hapi v17 support: use versions up to 0.0.5
