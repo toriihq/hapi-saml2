@@ -11,7 +11,7 @@ Check the documentation of the repository for `options` documentation
 
 ## Versions
 
-Version 1.3.5 - 1.3.6 uses `passport-saml@1.3.5`.
+Version 1.3.5 - 1.3.7 uses `passport-saml@1.3.5`.
 
 Hapi v18 support: use version from 1.0.0
 
