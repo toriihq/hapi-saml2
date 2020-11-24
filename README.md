@@ -40,7 +40,7 @@ const init = async () => {
     plugin: require('hapi-saml2'),
     options: {
       getSAMLOptions: (request) => {}, // required. should return options for `passport-saml`
-      login: async (request, identifier) => {}, // required. should return true if user is authenticated and authenticate user based on identifier (Profile.nameID is used)
+      login: async (request, identifier, user) => {}, // required. should return true if user is authenticated and authenticate user based on identifier (Profile.nameID is used)
       logout: async (request) => {}, // required. should logout the user on the app
       apiPrefix: '/saml', // prefix for added routes
       redirectUrlAfterSuccess: '/', // url to redirect to after successful login
