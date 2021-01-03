@@ -11,12 +11,19 @@ Check the documentation of the repository for `options` documentation
 
 ## Versions
 
-Version 1.3.5 - 1.3.8 uses `passport-saml@1.3.5`.
+### passport-saml version
 
-Hapi v18 support: use version from 1.0.0
+| hapi-saml2 version | passport-saml version |
+|----|-----
+| 2.0.2 - latest | passport-saml@2.0.2 |
+| 1.3.5 - 1.3.8 | passport-saml@1.3.5 |
 
-Hapi v17 support: use versions up to 0.0.5
+### @hapi/hapi supported versions
 
+| hapi-saml2 version | hapi.js supported version |
+|----|-----
+| 1.0.0 - latest | v18 - v20 |
+| 0.0.1 - 0.0.5 | v17 |
 
 ## Usage
 
