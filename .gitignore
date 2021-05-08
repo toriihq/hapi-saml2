@@ -1,5 +1,3 @@
-[tal ~/torii/gatsby-plugin-intercom-spa]$ vi ../torii_extension/.gitignore 
-
 node_modules/*
 
 .env

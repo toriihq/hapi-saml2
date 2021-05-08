@@ -15,7 +15,8 @@ Check the documentation of the repository for `options` documentation
 
 | hapi-saml2 version | passport-saml version |
 |----|-----
-| 2.0.2 - latest | passport-saml@2.0.2 |
+| 2.2.0 - latest | passport-saml@2.2.0 |
+| 2.0.2 - 2.0.3 | passport-saml@2.0.2 |
 | 1.3.5 - 1.3.8 | passport-saml@1.3.5 |
 
 ### @hapi/hapi supported versions
