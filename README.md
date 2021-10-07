@@ -1,11 +1,11 @@
 # hapi-saml2
 
-> hapi-saml2 is a [hapi.js](https://hapijs.com/) plugin, it uses [passport-saml](https://github.com/bergie/passport-saml) library to provide Single Sign On using SAML protocol
+> hapi-saml2 is a [hapi.js](https://hapijs.com/) plugin, it uses [passport-saml](https://github.com/node-saml/passport-saml) library to provide Single Sign On using SAML protocol
 
 
 ## Notes
 
-This plugin based on [passport-saml](https://github.com/bergie/passport-saml) and is a fork of [hapi-saml-sso](https://www.npmjs.com/package/hapi-saml-sso).
+This plugin based on [passport-saml](https://github.com/node-saml/passport-saml) and was originally inspired by [hapi-saml-sso](https://www.npmjs.com/package/hapi-saml-sso).
 
 Check the documentation of the repository for `options` documentation
 
@@ -15,7 +15,8 @@ Check the documentation of the repository for `options` documentation
 
 | hapi-saml2 version | passport-saml version |
 |----|-----
-| 2.2.0 - latest | passport-saml@2.2.0 |
+| 3.2.0 - latest | passport-saml@3.2.0 |
+| 2.2.0 - 2.2.0 | passport-saml@2.2.0 |
 | 2.0.2 - 2.0.3 | passport-saml@2.0.2 |
 | 1.3.5 - 1.3.8 | passport-saml@1.3.5 |
 
@@ -37,7 +38,7 @@ npm install hapi-saml2 --save
 Register the plugin and configure it with the options:
 
 ```javascript
-const Hapi = require('hapi')
+const Hapi = require('@hapi/hapi')
 const server = Hapi.server({
   port: 3000,
   host: 'localhost'
@@ -73,3 +74,13 @@ POST /saml/callback
 ```
 
 They can be configured with `apiPrefix` option.
+
+## Testing
+
+First, install the following dev-dependencies:
+```
+yarn add -D @hapi/hapi
+yarn add -D @hapi/boom
+```
+
+Then run `yarn test`. 
