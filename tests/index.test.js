@@ -12,8 +12,10 @@ describe('Hapi Plugin', () => {
       plugin: require('hapi-saml2'),
       options: {
         getSAMLOptions: jest.fn(async (request) => ({
+          issuer: 'https://saml.example.com/',
           cert: 'test-cert',
-          entryPoint: 'http://localhost:3000/entryPoint'
+          entryPoint: 'http://localhost:3000/entryPoint',
+          generateUniqueId: () => 'uniqueId'
         })),
         login: jest.fn(async (request, identifier, user) => {}),
         logout: jest.fn(async (request) => {}),
@@ -34,7 +36,7 @@ describe('Hapi Plugin', () => {
         method: 'GET',
         url: '/saml-test/metadata'
       }
-      const expectedResult = fs.readFileSync(path.join(__dirname, './fixtures/expected/sp_metadata.xml')).toString()
+      const expectedResult = fs.readFileSync(path.join(__dirname, './fixtures/expected/sp_metadata.xml')).toString().trim()
 
       const response = await server.inject(request)
 
