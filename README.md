@@ -1,25 +1,26 @@
 # hapi-saml2
 
-> hapi-saml2 is a [hapi.js](https://hapijs.com/) plugin, it uses [passport-saml](https://github.com/node-saml/passport-saml) library to provide Single Sign On using SAML protocol
+> hapi-saml2 is a [hapi.js](https://hapijs.com/) plugin, it uses [node-saml](https://github.com/node-saml/node-saml) library to provide Single Sign On using SAML protocol
 
 
 ## Notes
 
-This plugin based on [passport-saml](https://github.com/node-saml/passport-saml) and was originally inspired by [hapi-saml-sso](https://www.npmjs.com/package/hapi-saml-sso).
+This plugin based on [node-saml](https://github.com/node-saml/node-saml) and was originally inspired by [hapi-saml-sso](https://www.npmjs.com/package/hapi-saml-sso).
 
 Check the documentation of the repository for `options` documentation
 
 ## Versions
 
-### passport-saml version
+### node-saml version
 
-| hapi-saml2 version | passport-saml version |
-|--------------------|-----------------------|
-| 3.2.2 - 3.2.2      | passport-saml@3.2.1   |
-| 3.2.0 - 3.2.1      | passport-saml@3.2.0   |
-| 2.2.0 - 2.2.0      | passport-saml@2.2.0   |
-| 2.0.2 - 2.0.3      | passport-saml@2.0.2   |
-| 1.3.5 - 1.3.8      | passport-saml@1.3.5   |
+| hapi-saml2 version | dependency version         |
+|--------------------|----------------------------|
+| 4.0.3 - 4.0.3      | @node-saml/node-saml@4.0.3 |
+| 3.2.2 - 3.2.2      | passport-saml@3.2.1        |
+| 3.2.0 - 3.2.1      | passport-saml@3.2.0        |
+| 2.2.0 - 2.2.0      | passport-saml@2.2.0        |
+| 2.0.2 - 2.0.3      | passport-saml@2.0.2        |
+| 1.3.5 - 1.3.8      | passport-saml@1.3.5        |
 
 ### @hapi/hapi supported versions
 
@@ -49,7 +50,7 @@ const init = async () => {
   await server.register({
     plugin: require('hapi-saml2'),
     options: {
-      getSAMLOptions: (request) => {}, // required. should return options for `passport-saml`
+      getSAMLOptions: (request) => {}, // required. should return options for `node-saml`
       login: async (request, identifier, user) => {}, // required. should return true if user is authenticated and authenticate user based on identifier (Profile.nameID is used)
       logout: async (request) => {}, // required. should logout the user on the app
       apiPrefix: '/saml', // prefix for added routes
