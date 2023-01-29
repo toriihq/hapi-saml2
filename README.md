@@ -15,7 +15,7 @@ Check the documentation of the repository for `options` documentation
 
 | hapi-saml2 version | dependency version         |
 |--------------------|----------------------------|
-| 4.0.3 - 4.0.3      | @node-saml/node-saml@4.0.3 |
+| 4.0.3 - 4.0.4      | @node-saml/node-saml@4.0.3 |
 | 3.2.2 - 3.2.2      | passport-saml@3.2.1        |
 | 3.2.0 - 3.2.1      | passport-saml@3.2.0        |
 | 2.2.0 - 2.2.0      | passport-saml@2.2.0        |
@@ -25,9 +25,9 @@ Check the documentation of the repository for `options` documentation
 ### @hapi/hapi supported versions
 
 | hapi-saml2 version | hapi.js supported version |
-|----|-----|
-| 1.0.0 - latest | v18 - v20 |
-| 0.0.1 - 0.0.5 | v17 |
+|----|---------------------------|
+| 1.0.0 - latest | v18 - v21                 |
+| 0.0.1 - 0.0.5 | v17                       |
 
 ## Usage
 
@@ -57,7 +57,8 @@ const init = async () => {
       redirectUrlAfterSuccess: '/', // url to redirect to after successful login
       redirectUrlAfterFailure: '/', // url to redirect to after failed login
       boomErrorForMissingConfiguration: Boom.badImplementation('SAML instance is not configured'), // Boom error to throw on missing configuration error
-      boomErrorForIncorrectConfiguration: Boom.badImplementation('SAML configuration is incorrect') // Boom error to throw on incorrect configuration error
+      boomErrorForIncorrectConfiguration: Boom.badImplementation('SAML configuration is incorrect'), // Boom error to throw on incorrect configuration error
+      postResponseValidationErrorHandler: async ({ request, h, e }) => { return h.redirect('/errorPage') } // function to handle Post Response validation errors
     }
   })
 

@@ -23,7 +23,10 @@ describe('Hapi Plugin', () => {
         redirectUrlAfterSuccess: '/success',
         redirectUrlAfterFailure: '/failure',
         boomErrorForMissingConfiguration: Boom.badImplementation('SAML instance is not configured'),
-        boomErrorForIncorrectConfiguration: Boom.badImplementation('SAML configuration is incorrect')
+        boomErrorForIncorrectConfiguration: Boom.badImplementation('SAML configuration is incorrect'),
+        postResponseValidationErrorHandler: jest.fn(({ h, e }) => {
+          return h.redirect(`https://www.example.com/?error=${encodeURIComponent(e.message)}`)
+        })
       }
     })
 
@@ -117,6 +120,20 @@ describe('Hapi Plugin', () => {
 
       expect(response.statusCode).toEqual(406)
       expect(response.result.message).toEqual('SAMLRequest not supported')
+    })
+
+    it('should return error when SAMLResponse is invalid', async () => {
+      const request = {
+        method: 'POST',
+        url: '/saml-test/callback',
+        payload: {
+          SAMLResponse: 'test-SAMLResponse-invalid'
+        }
+      }
+      const response = await server.inject(request)
+
+      expect(response.statusCode).toEqual(302)
+      expect(response.headers.location).toEqual('https://www.example.com/?error=Not%20a%20valid%20XML%20document')
     })
   })
 })
