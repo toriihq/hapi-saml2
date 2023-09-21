@@ -1,6 +1,6 @@
 {
   "name": "hapi-saml2",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "description": "SAML Auth for Hapi.js",
   "main": "./lib/index.js",
   "author": "Tal Bereznitskey <berzniz@gmail.com>",
@@ -16,12 +16,16 @@
     ]
   },
   "dependencies": {
-    "@node-saml/node-saml": "^4.0.3"
+    "@node-saml/node-saml": "^4.0.3",
+    "lodash": "^4.17.21"
   },
   "peerDependencies": {
     "@hapi/boom": ">=7.2.0"
   },
   "devDependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@hapi/hapi": "^21.3.2",
+    "@hapi/hoek": "^11.0.2",
     "jest": "^27.2.4",
     "standard": "^16.0.4"
   },
