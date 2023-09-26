@@ -2,6 +2,20 @@ const Hapi = require('@hapi/hapi')
 const Boom = require('@hapi/boom')
 const fs = require('fs')
 const path = require('path')
+const { SAML } = require('@node-saml/node-saml')
+
+jest.mock('@node-saml/node-saml', () => {
+  return {
+    ...jest.requireActual('@node-saml/node-saml')
+  }
+})
+
+const loginMockFn = jest.fn()
+  .mockReturnValueOnce({ success: true })
+  .mockReturnValueOnce('success')
+  .mockReturnValueOnce(null)
+  .mockReturnValueOnce({ success: false, errorMessage: 'test-error-message' })
+  .mockReturnValueOnce({ success: false })
 
 describe('Hapi Plugin', () => {
   let server
@@ -17,7 +31,7 @@ describe('Hapi Plugin', () => {
           entryPoint: 'http://localhost:3000/entryPoint',
           generateUniqueId: () => 'uniqueId'
         })),
-        login: jest.fn(async (request, identifier, user) => {}),
+        login: loginMockFn,
         logout: jest.fn(async (request) => {}),
         apiPrefix: '/saml-test',
         redirectUrlAfterSuccess: '/success',
@@ -134,6 +148,45 @@ describe('Hapi Plugin', () => {
 
       expect(response.statusCode).toEqual(302)
       expect(response.headers.location).toEqual('https://www.example.com/?error=Not%20a%20valid%20XML%20document')
+    })
+
+    describe('Handling result from the login function', () => {
+      const request = {
+        method: 'POST',
+        url: '/saml-test/callback',
+        payload: {
+          SAMLResponse: 'test'
+        }
+      }
+
+      beforeAll(() => {
+        SAML.prototype.validatePostResponseAsync = jest.fn().mockResolvedValue(Promise.resolve({ profile: 'test' }))
+      })
+
+      it('should redirect to success page if login() return { success: true }', async () => {
+        const response = await server.inject(request)
+        expect(response.headers.location).toEqual('/success')
+      })
+
+      it('should redirect to success page if login() return string', async () => {
+        const response = await server.inject(request)
+        expect(response.headers.location).toEqual('/success')
+      })
+
+      it('should redirect to the default failure page if login() return null', async () => {
+        const response = await server.inject(request)
+        expect(response.headers.location).toEqual('/failure')
+      })
+
+      it('should redirect to failure page with message if login() return { success: false, errorMessage: String }', async () => {
+        const response = await server.inject(request)
+        expect(response.headers.location).toEqual('https://www.example.com/?error=test-error-message')
+      })
+
+      it('should redirect to the default failure page if login() return { success: false }', async () => {
+        const response = await server.inject(request)
+        expect(response.headers.location).toEqual('/failure')
+      })
     })
   })
 })

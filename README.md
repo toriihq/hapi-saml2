@@ -15,6 +15,7 @@ Check the documentation of the repository for `options` documentation
 
 | hapi-saml2 version | dependency version         |
 |--------------------|----------------------------|
+| 4.0.5 - 4.0.5      | @node-saml/node-saml@4.0.5 |
 | 4.0.3 - 4.0.4      | @node-saml/node-saml@4.0.3 |
 | 3.2.2 - 3.2.2      | passport-saml@3.2.1        |
 | 3.2.0 - 3.2.1      | passport-saml@3.2.0        |
@@ -51,7 +52,8 @@ const init = async () => {
     plugin: require('hapi-saml2'),
     options: {
       getSAMLOptions: (request) => {}, // required. should return options for `node-saml`
-      login: async (request, identifier, user) => {}, // required. should return true if user is authenticated and authenticate user based on identifier (Profile.nameID is used)
+      login: async (request, identifier, user) => {}, // required. should return true if user is authenticated and authenticate user based on identifier (Profile.nameID is used), 
+      // or return an object { success: Boolean, errorMessage: String } to sent an error message to postResponseValidationErrorHandler(if implemented)
       logout: async (request) => {}, // required. should logout the user on the app
       apiPrefix: '/saml', // prefix for added routes
       redirectUrlAfterSuccess: '/', // url to redirect to after successful login
