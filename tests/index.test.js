@@ -16,6 +16,8 @@ const loginMockFn = jest.fn()
   .mockReturnValueOnce(null)
   .mockReturnValueOnce({ success: false, errorMessage: 'test-error-message' })
   .mockReturnValueOnce({ success: false })
+  .mockReturnValueOnce({ loginResult: 'loginResult' })
+  .mockReturnValueOnce(false)
 
 describe('Hapi Plugin', () => {
   let server
@@ -184,6 +186,16 @@ describe('Hapi Plugin', () => {
       })
 
       it('should redirect to the default failure page if login() return { success: false }', async () => {
+        const response = await server.inject(request)
+        expect(response.headers.location).toEqual('/failure')
+      })
+
+      it('should redirect to the success page if login() return an object without success = false', async () => {
+        const response = await server.inject(request)
+        expect(response.headers.location).toEqual('/success')
+      })
+
+      it('should redirect to the failure page if login() === false', async () => {
         const response = await server.inject(request)
         expect(response.headers.location).toEqual('/failure')
       })
