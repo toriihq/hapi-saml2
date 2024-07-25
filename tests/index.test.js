@@ -20,33 +20,51 @@ const loginMockFn = jest.fn()
   .mockReturnValueOnce(false)
 
 describe('Hapi Plugin', () => {
-  let server
-  beforeAll(async () => {
-    server = Hapi.server({ port: 0, host: 'localhost' })
+  let serverForRedirect
+  let serverForPOST
 
-    await server.register({
+  beforeAll(async () => {
+    serverForRedirect = Hapi.server({ port: 0, host: 'localhost' })
+    serverForPOST = Hapi.server({ port: 0, host: 'localhost' })
+
+    const sharedOptions = {
+      login: loginMockFn,
+      logout: jest.fn(async (request) => {}),
+      apiPrefix: '/saml-test',
+      redirectUrlAfterSuccess: '/success',
+      redirectUrlAfterFailure: '/failure',
+      boomErrorForMissingConfiguration: Boom.badImplementation('SAML instance is not configured'),
+      boomErrorForIncorrectConfiguration: Boom.badImplementation('SAML configuration is incorrect'),
+      postResponseValidationErrorHandler: jest.fn(({ h, e }) => {
+        return h.redirect(`https://www.example.com/?error=${encodeURIComponent(e.message)}`)
+      })
+    }
+    const sharedSAMLOptions = {
+      issuer: 'https://saml.example.com/',
+      cert: 'test-cert',
+      entryPoint: 'http://localhost:3000/entryPoint',
+      generateUniqueId: () => 'uniqueId'
+    }
+    await serverForRedirect.register({
       plugin: require('hapi-saml2'),
       options: {
-        getSAMLOptions: jest.fn(async (request) => ({
-          issuer: 'https://saml.example.com/',
-          cert: 'test-cert',
-          entryPoint: 'http://localhost:3000/entryPoint',
-          generateUniqueId: () => 'uniqueId'
-        })),
-        login: loginMockFn,
-        logout: jest.fn(async (request) => {}),
-        apiPrefix: '/saml-test',
-        redirectUrlAfterSuccess: '/success',
-        redirectUrlAfterFailure: '/failure',
-        boomErrorForMissingConfiguration: Boom.badImplementation('SAML instance is not configured'),
-        boomErrorForIncorrectConfiguration: Boom.badImplementation('SAML configuration is incorrect'),
-        postResponseValidationErrorHandler: jest.fn(({ h, e }) => {
-          return h.redirect(`https://www.example.com/?error=${encodeURIComponent(e.message)}`)
-        })
+        ...sharedOptions,
+        getSAMLOptions: jest.fn(async (request) => (sharedSAMLOptions))
       }
     })
+    await serverForRedirect.initialize()
 
-    await server.initialize()
+    await serverForPOST.register({
+      plugin: require('hapi-saml2'),
+      options: {
+        ...sharedOptions,
+        getSAMLOptions: jest.fn(async (request) => ({
+          ...sharedSAMLOptions,
+          authnRequestBinding: 'HTTP-POST'
+        }))
+      }
+    })
+    await serverForPOST.initialize()
   })
 
   describe('/saml-test/metadata', () => {
@@ -57,7 +75,7 @@ describe('Hapi Plugin', () => {
       }
       const expectedResult = fs.readFileSync(path.join(__dirname, './fixtures/expected/sp_metadata.xml')).toString().trim()
 
-      const response = await server.inject(request)
+      const response = await serverForRedirect.inject(request)
 
       expect(response.statusCode).toEqual(200)
       expect(response.result).toEqual(expectedResult)
@@ -70,10 +88,21 @@ describe('Hapi Plugin', () => {
         method: 'GET',
         url: '/saml-test/login'
       }
-      const response = await server.inject(request)
+      const response = await serverForRedirect.inject(request)
 
       expect(response.statusCode).toEqual(302)
       expect(response.headers.location).toContain('http://localhost:3000/entryPoint?SAMLRequest=')
+    })
+
+    it('should return HTTP to the correct location', async () => {
+      const request = {
+        method: 'GET',
+        url: '/saml-test/login'
+      }
+      const response = await serverForPOST.inject(request)
+
+      expect(response.statusCode).toEqual(200)
+      expect(response.result).toContain(`<input type="hidden" name="SAMLRequest" value="`)
     })
   })
 
@@ -83,7 +112,7 @@ describe('Hapi Plugin', () => {
         method: 'GET',
         url: `/saml-test/logout?nameId=${encodeURIComponent('test@example.com')}&nameIdFormat=${encodeURIComponent('test-nameIdFormat')}`
       }
-      const response = await server.inject(request)
+      const response = await serverForRedirect.inject(request)
 
       expect(response.statusCode).toEqual(302)
       expect(response.headers.location).toContain('http://localhost:3000/entryPoint?SAMLRequest=')
@@ -94,7 +123,7 @@ describe('Hapi Plugin', () => {
         method: 'GET',
         url: `/saml-test/logout?nameId=${encodeURIComponent('test@example.com')}`
       }
-      const response = await server.inject(request)
+      const response = await serverForRedirect.inject(request)
 
       expect(response.statusCode).toEqual(400)
       expect(response.result.message).toEqual('Missing required "nameIdFormat" query parameter')
@@ -105,7 +134,7 @@ describe('Hapi Plugin', () => {
         method: 'GET',
         url: `/saml-test/logout?nameIdFormat=${encodeURIComponent('test-nameIdFormat')}`
       }
-      const response = await server.inject(request)
+      const response = await serverForRedirect.inject(request)
 
       expect(response.statusCode).toEqual(400)
       expect(response.result.message).toEqual('Missing required "nameId" query parameter')
@@ -118,7 +147,7 @@ describe('Hapi Plugin', () => {
         method: 'POST',
         url: '/saml-test/callback'
       }
-      const response = await server.inject(request)
+      const response = await serverForRedirect.inject(request)
 
       expect(response.statusCode).toEqual(406)
       expect(response.result.message).toEqual('Invalid SAML format')
@@ -132,7 +161,7 @@ describe('Hapi Plugin', () => {
           SAMLRequest: 'test-SAMLRequest'
         }
       }
-      const response = await server.inject(request)
+      const response = await serverForRedirect.inject(request)
 
       expect(response.statusCode).toEqual(406)
       expect(response.result.message).toEqual('SAMLRequest not supported')
@@ -146,7 +175,7 @@ describe('Hapi Plugin', () => {
           SAMLResponse: 'test-SAMLResponse-invalid'
         }
       }
-      const response = await server.inject(request)
+      const response = await serverForRedirect.inject(request)
 
       expect(response.statusCode).toEqual(302)
       expect(response.headers.location).toEqual('https://www.example.com/?error=Not%20a%20valid%20XML%20document')
@@ -166,37 +195,37 @@ describe('Hapi Plugin', () => {
       })
 
       it('should redirect to success page if login() return { success: true }', async () => {
-        const response = await server.inject(request)
+        const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/success')
       })
 
       it('should redirect to success page if login() return string', async () => {
-        const response = await server.inject(request)
+        const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/success')
       })
 
       it('should redirect to the default failure page if login() return null', async () => {
-        const response = await server.inject(request)
+        const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/failure')
       })
 
       it('should redirect to failure page with message if login() return { success: false, errorMessage: String }', async () => {
-        const response = await server.inject(request)
+        const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('https://www.example.com/?error=test-error-message')
       })
 
       it('should redirect to the default failure page if login() return { success: false }', async () => {
-        const response = await server.inject(request)
+        const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/failure')
       })
 
       it('should redirect to the success page if login() return an object without success = false', async () => {
-        const response = await server.inject(request)
+        const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/success')
       })
 
       it('should redirect to the failure page if login() === false', async () => {
-        const response = await server.inject(request)
+        const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/failure')
       })
     })

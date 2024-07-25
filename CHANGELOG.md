@@ -1,5 +1,8 @@
 # hapi-saml2 Changelog
 
+## Version 4.0.7
+- Add support for `authnRequestBinding: 'HTTP-POST'` option
+
 ## Version 4.0.6
 - Fix the results handling of the login function.
 
