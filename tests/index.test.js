@@ -1,7 +1,7 @@
 const Hapi = require('@hapi/hapi')
 const Boom = require('@hapi/boom')
-const fs = require('fs')
-const path = require('path')
+const fs = require('node:fs')
+const path = require('node:path')
 const { SAML } = require('@node-saml/node-saml')
 
 jest.mock('@node-saml/node-saml', () => {
@@ -22,10 +22,12 @@ const loginMockFn = jest.fn()
 describe('Hapi Plugin', () => {
   let serverForRedirect
   let serverForPOST
+  let serverWithRedirectUrl
 
   beforeAll(async () => {
     serverForRedirect = Hapi.server({ port: 0, host: 'localhost' })
     serverForPOST = Hapi.server({ port: 0, host: 'localhost' })
+    serverWithRedirectUrl = Hapi.server({ port: 0, host: 'localhost' })
 
     const sharedOptions = {
       login: loginMockFn,
@@ -45,11 +47,12 @@ describe('Hapi Plugin', () => {
       entryPoint: 'http://localhost:3000/entryPoint',
       generateUniqueId: () => 'uniqueId'
     }
+
     await serverForRedirect.register({
       plugin: require('hapi-saml2'),
       options: {
         ...sharedOptions,
-        getSAMLOptions: jest.fn(async (request) => (sharedSAMLOptions))
+        getSAMLOptions: jest.fn(async (request) => ({ SAMLOptions: sharedSAMLOptions }))
       }
     })
     await serverForRedirect.initialize()
@@ -59,12 +62,26 @@ describe('Hapi Plugin', () => {
       options: {
         ...sharedOptions,
         getSAMLOptions: jest.fn(async (request) => ({
-          ...sharedSAMLOptions,
-          authnRequestBinding: 'HTTP-POST'
+          SAMLOptions: {
+            ...sharedSAMLOptions,
+            authnRequestBinding: 'HTTP-POST'
+          }
         }))
       }
     })
     await serverForPOST.initialize()
+
+    await serverWithRedirectUrl.register({
+      plugin: require('hapi-saml2'),
+      options: {
+        ...sharedOptions,
+        getSAMLOptions: jest.fn(async (request) => ({
+          SAMLOptions: sharedSAMLOptions,
+          redirectUrl: '/custom-redirect'
+        }))
+      }
+    })
+    await serverWithRedirectUrl.initialize()
   })
 
   describe('/saml-test/metadata', () => {
@@ -102,7 +119,7 @@ describe('Hapi Plugin', () => {
       const response = await serverForPOST.inject(request)
 
       expect(response.statusCode).toEqual(200)
-      expect(response.result).toContain(`<input type="hidden" name="SAMLRequest" value="`)
+      expect(response.result).toContain('<input type="hidden" name="SAMLRequest" value="')
     })
   })
 
@@ -228,6 +245,154 @@ describe('Hapi Plugin', () => {
         const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/failure')
       })
+    })
+  })
+
+  describe('/saml-test/metadata', () => {
+    it('should get a valid metadata', async () => {
+      const request = {
+        method: 'GET',
+        url: '/saml-test/metadata'
+      }
+      const expectedResult = fs.readFileSync(path.join(__dirname, './fixtures/expected/sp_metadata.xml')).toString().trim()
+
+      const response = await serverForRedirect.inject(request)
+
+      expect(response.statusCode).toEqual(200)
+      expect(response.result).toEqual(expectedResult)
+    })
+  })
+
+  describe('/saml-test/login', () => {
+    it('should redirect to the correct location', async () => {
+      const request = {
+        method: 'GET',
+        url: '/saml-test/login'
+      }
+      const response = await serverForRedirect.inject(request)
+
+      expect(response.statusCode).toEqual(302)
+      expect(response.headers.location).toContain('http://localhost:3000/entryPoint?SAMLRequest=')
+    })
+
+    it('should return HTTP to the correct location', async () => {
+      const request = {
+        method: 'GET',
+        url: '/saml-test/login'
+      }
+      const response = await serverForPOST.inject(request)
+
+      expect(response.statusCode).toEqual(200)
+      expect(response.result).toContain('<input type="hidden" name="SAMLRequest" value="')
+    })
+  })
+
+  describe('getSAMLOptions with redirectUrl', () => {
+    it('should redirect when redirectUrl is provided in getSAMLOptions response', async () => {
+      const request = {
+        method: 'GET',
+        url: '/saml-test/metadata'
+      }
+      const response = await serverWithRedirectUrl.inject(request)
+
+      expect(response.statusCode).toEqual(302)
+      expect(response.headers.location).toEqual('/custom-redirect')
+    })
+
+    it('should redirect when redirectUrl is provided for login endpoint', async () => {
+      const request = {
+        method: 'GET',
+        url: '/saml-test/login'
+      }
+      const response = await serverWithRedirectUrl.inject(request)
+
+      expect(response.statusCode).toEqual(302)
+      expect(response.headers.location).toEqual('/custom-redirect')
+    })
+
+    it('should redirect when redirectUrl is provided for logout endpoint', async () => {
+      const request = {
+        method: 'GET',
+        url: `/saml-test/logout?nameId=${encodeURIComponent('test@example.com')}&nameIdFormat=${encodeURIComponent('test-nameIdFormat')}`
+      }
+      const response = await serverWithRedirectUrl.inject(request)
+
+      expect(response.statusCode).toEqual(302)
+      expect(response.headers.location).toEqual('/custom-redirect')
+    })
+
+    it('should redirect when redirectUrl is provided for callback endpoint', async () => {
+      const request = {
+        method: 'POST',
+        url: '/saml-test/callback',
+        payload: {
+          SAMLResponse: 'test'
+        }
+      }
+      const response = await serverWithRedirectUrl.inject(request)
+
+      expect(response.statusCode).toEqual(302)
+      expect(response.headers.location).toEqual('/custom-redirect')
+    })
+  })
+
+  describe('Error handling', () => {
+    let serverWithNullOptions
+    let serverWithEmptyOptions
+
+    beforeAll(async () => {
+      serverWithNullOptions = Hapi.server({ port: 0, host: 'localhost' })
+      serverWithEmptyOptions = Hapi.server({ port: 0, host: 'localhost' })
+
+      const sharedOptions = {
+        login: jest.fn(),
+        logout: jest.fn(),
+        apiPrefix: '/saml-test',
+        redirectUrlAfterSuccess: '/success',
+        redirectUrlAfterFailure: '/failure',
+        boomErrorForMissingConfiguration: Boom.badImplementation('SAML instance is not configured'),
+        boomErrorForIncorrectConfiguration: Boom.badImplementation('SAML configuration is incorrect')
+      }
+
+      await serverWithNullOptions.register({
+        plugin: require('hapi-saml2'),
+        options: {
+          ...sharedOptions,
+          getSAMLOptions: jest.fn(async (request) => null)
+        }
+      })
+      await serverWithNullOptions.initialize()
+
+      await serverWithEmptyOptions.register({
+        plugin: require('hapi-saml2'),
+        options: {
+          ...sharedOptions,
+          getSAMLOptions: jest.fn(async (request) => ({}))
+        }
+      })
+      await serverWithEmptyOptions.initialize()
+    })
+
+    it('should throw error when getSAMLOptions returns null', async () => {
+      const request = {
+        method: 'GET',
+        url: '/saml-test/metadata'
+      }
+      const response = await serverWithNullOptions.inject(request)
+
+      expect(response.statusCode).toEqual(500)
+      expect(response.result.error).toEqual('Internal Server Error')
+    })
+
+    it('should throw error when getSAMLOptions returns empty object', async () => {
+      const request = {
+        method: 'GET',
+        url: '/saml-test/metadata'
+      }
+      const response = await serverWithEmptyOptions.inject(request)
+
+      expect(response.statusCode).toEqual(500)
+      expect(response.result.error).toEqual('Internal Server Error')
     })
   })
 })
