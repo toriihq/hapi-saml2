@@ -1,7 +1,7 @@
 const Hapi = require('@hapi/hapi')
 const Boom = require('@hapi/boom')
-const fs = require('fs')
-const path = require('path')
+const fs = require('node:fs')
+const path = require('node:path')
 const { SAML } = require('@node-saml/node-saml')
 
 jest.mock('@node-saml/node-saml', () => {
@@ -22,10 +22,14 @@ const loginMockFn = jest.fn()
 describe('Hapi Plugin', () => {
   let serverForRedirect
   let serverForPOST
+  let serverWithPreLoginContinue
+  let serverWithPreLoginRedirect
 
   beforeAll(async () => {
     serverForRedirect = Hapi.server({ port: 0, host: 'localhost' })
     serverForPOST = Hapi.server({ port: 0, host: 'localhost' })
+    serverWithPreLoginContinue = Hapi.server({ port: 0, host: 'localhost' })
+    serverWithPreLoginRedirect = Hapi.server({ port: 0, host: 'localhost' })
 
     const sharedOptions = {
       login: loginMockFn,
@@ -65,6 +69,28 @@ describe('Hapi Plugin', () => {
       }
     })
     await serverForPOST.initialize()
+
+    await serverWithPreLoginContinue.register({
+      plugin: require('hapi-saml2'),
+      options: {
+        ...sharedOptions,
+        getSAMLOptions: jest.fn(async (request) => (sharedSAMLOptions)),
+        preLogin: (request, h) => h.continue
+      }
+    })
+    await serverWithPreLoginContinue.initialize()
+
+    await serverWithPreLoginRedirect.register({
+      plugin: require('hapi-saml2'),
+      options: {
+        ...sharedOptions,
+        getSAMLOptions: jest.fn(async (request) => (sharedSAMLOptions)),
+        preLogin: (request, h) => {
+          return h.redirect('/custom-redirect').takeover()
+        }
+      }
+    })
+    await serverWithPreLoginRedirect.initialize()
   })
 
   describe('/saml-test/metadata', () => {
@@ -103,6 +129,30 @@ describe('Hapi Plugin', () => {
 
       expect(response.statusCode).toEqual(200)
       expect(response.result).toContain(`<input type="hidden" name="SAMLRequest" value="`)
+    })
+  })
+
+  describe('preLogin function', () => {
+    it('should continue to SAML login when preLogin returns h.continue', async () => {
+      const request = {
+        method: 'GET',
+        url: '/saml-test/login'
+      }
+      const response = await serverWithPreLoginContinue.inject(request)
+
+      expect(response.statusCode).toEqual(302)
+      expect(response.headers.location).toContain('http://localhost:3000/entryPoint?SAMLRequest=')
+    })
+
+    it('should redirect to custom URL when preLogin returns h.redirect', async () => {
+      const request = {
+        method: 'GET',
+        url: '/saml-test/login'
+      }
+      const response = await serverWithPreLoginRedirect.inject(request)
+
+      expect(response.statusCode).toEqual(302)
+      expect(response.headers.location).toEqual('/custom-redirect')
     })
   })
 
