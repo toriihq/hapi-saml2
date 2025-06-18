@@ -1,6 +1,6 @@
 {
   "name": "hapi-saml2",
-  "version": "4.0.7",
+  "version": "5.0.1",
   "description": "SAML Auth for Hapi.js",
   "main": "./lib/index.js",
   "author": "Tal Bereznitskey <berzniz@gmail.com>",
