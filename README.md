@@ -15,6 +15,7 @@ Check the documentation of the repository for `options` documentation
 
 | hapi-saml2 version | dependency version         |
 |--------------------|----------------------------|
+| 5.0.2 - latest     | @node-saml/node-saml@5.0.1 |
 | 5.0.0 - 5.0.1      | @node-saml/node-saml@4.0.5 |
 | 4.0.5 - 4.0.7      | @node-saml/node-saml@4.0.5 |
 | 4.0.3 - 4.0.4      | @node-saml/node-saml@4.0.3 |
@@ -52,16 +53,21 @@ const init = async () => {
   await server.register({
     plugin: require('hapi-saml2'),
     options: {
-      getSAMLOptions: (request) => {}, // required. should return options for `node-saml`
-      login: async (request, identifier, user) => {}, // required. should return true if user is authenticated and authenticate user based on identifier (Profile.nameID is used), 
-      // or return an object { success: Boolean, errorMessage: String } to sent an error message to postResponseValidationErrorHandler(if implemented)
-      logout: async (request) => {}, // required. should logout the user on the app
+      // required
+      getSAMLOptions: (request) => {}, // should return options for `node-saml`
+      
+      login: async (request, identifier, user) => {}, // called by /callback while handling a SAML Response. should return true if user is authenticated and authenticate user based on identifier (Profile.nameID is used), or return an object { success: Boolean, errorMessage: String } to send an error message to postResponseValidationErrorHandler (if implemented)
+
+      logout: async (request) => {}, // required if using Single Logout. should logout the user on the app
+
+      // optional
       apiPrefix: '/saml', // prefix for added routes
       redirectUrlAfterSuccess: '/', // url to redirect to after successful login
       redirectUrlAfterFailure: '/', // url to redirect to after failed login
       boomErrorForMissingConfiguration: Boom.badImplementation('SAML instance is not configured'), // Boom error to throw on missing configuration error
       boomErrorForIncorrectConfiguration: Boom.badImplementation('SAML configuration is incorrect'), // Boom error to throw on incorrect configuration error
-      postResponseValidationErrorHandler: async ({ request, h, e }) => { return h.redirect('/errorPage') } // function to handle Post Response validation errors
+      postResponseValidationErrorHandler: async ({ request, h, e }) => { return h.redirect('/errorPage') }, // function to handle Post Response validation errors
+      preLogin: async (request, h) => {} // hook to run before the /login route is called
     }
   })
 

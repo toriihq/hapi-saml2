@@ -44,8 +44,9 @@ describe('Hapi Plugin', () => {
       })
     }
     const sharedSAMLOptions = {
+      callbackUrl: 'http://localhost:3000/callback',
       issuer: 'https://saml.example.com/',
-      cert: 'test-cert',
+      idpCert: 'test-cert',
       entryPoint: 'http://localhost:3000/entryPoint',
       generateUniqueId: () => 'uniqueId'
     }
@@ -128,7 +129,7 @@ describe('Hapi Plugin', () => {
       const response = await serverForPOST.inject(request)
 
       expect(response.statusCode).toEqual(200)
-      expect(response.result).toContain(`<input type="hidden" name="SAMLRequest" value="`)
+      expect(response.result).toContain('<input type="hidden" name="SAMLRequest" value="')
     })
   })
 
