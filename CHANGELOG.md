@@ -1,5 +1,10 @@
 # hapi-saml2 Changelog
 
+## Version 5.0.2
+- Upgrade to node-saml version 5.0.1
+- `cert` is now `idpCert`
+- `signingCert` is now `publicCert`
+
 ## Version 5.0.1
 - Added `preLogin` handler option
 
