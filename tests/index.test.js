@@ -43,7 +43,7 @@ describe('Hapi Plugin', () => {
       idpCert: IDP_CERT,
       entryPoint: 'http://localhost:3000/entryPoint',
       generateUniqueId: () => 'uniqueId',
-      wantAssertionsSigned: false,
+      wantAssertionsSigned: true,
       wantAuthnResponseSigned: true
     }
     await serverForRedirect.register({
@@ -96,13 +96,7 @@ describe('Hapi Plugin', () => {
         method: 'GET',
         url: '/saml-test/metadata'
       }
-      const expectedResult = `<?xml version="1.0"?>
-<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="https://saml.example.com/" ID="uniqueId">
-  <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol" AuthnRequestsSigned="false">
-    <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
-    <AssertionConsumerService index="1" isDefault="true" Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="http://localhost:3000/callback"/>
-  </SPSSODescriptor>
-</EntityDescriptor>`
+      const expectedResult = fs.readFileSync(path.join(__dirname, './fixtures/expected/sp_metadata.xml')).toString().trim()
 
       const response = await serverForRedirect.inject(request)
 

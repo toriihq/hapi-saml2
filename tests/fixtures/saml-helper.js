@@ -61,35 +61,63 @@ const createValidSAMLResponse = (options = {}) => {
   </saml:Assertion>
 </samlp:Response>`
 
-  // Sign the entire response
-  const sig = new SignedXml({
-    privateKey: IDP_PRIVATE_KEY
-  })
-  
-  sig.addReference({
-    xpath: `//*[@ID='${responseId}']`,
-    transforms: [
-      'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
-      'http://www.w3.org/2001/10/xml-exc-c14n#'
-    ],
-    digestAlgorithm: 'http://www.w3.org/2001/04/xmlenc#sha256'
-  })
-  
-  sig.canonicalizationAlgorithm = 'http://www.w3.org/2001/10/xml-exc-c14n#'
-  sig.signatureAlgorithm = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
-  sig.keyInfoProvider = {
-    getKeyInfo: function (key, prefix) {
-      return `<X509Data><X509Certificate>${IDP_CERT.replace(/-----BEGIN CERTIFICATE-----|\n|-----END CERTIFICATE-----/g, '')}</X509Certificate></X509Data>`
-    }
-  }
-
   try {
-    sig.computeSignature(samlResponse, {
-      location: { reference: `//*[@ID='${responseId}']`, action: 'prepend' }
+    // First sign the assertion
+    const assertionSig = new SignedXml({
+      privateKey: IDP_PRIVATE_KEY
     })
     
-    // Return base64 encoded response
-    return Buffer.from(sig.getSignedXml().trim()).toString('base64')
+    assertionSig.addReference({
+      xpath: `//*[@ID='${assertionId}']`,
+      transforms: [
+        'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
+        'http://www.w3.org/2001/10/xml-exc-c14n#'
+      ],
+      digestAlgorithm: 'http://www.w3.org/2001/04/xmlenc#sha256'
+    })
+    
+    assertionSig.canonicalizationAlgorithm = 'http://www.w3.org/2001/10/xml-exc-c14n#'
+    assertionSig.signatureAlgorithm = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
+    assertionSig.keyInfoProvider = {
+      getKeyInfo: function (key, prefix) {
+        return `<X509Data><X509Certificate>${IDP_CERT.replace(/-----BEGIN CERTIFICATE-----|\n|-----END CERTIFICATE-----/g, '')}</X509Certificate></X509Data>`
+      }
+    }
+    
+    assertionSig.computeSignature(samlResponse, {
+      location: { reference: `//*[@ID='${assertionId}']/*[local-name()='Issuer']`, action: 'after' }
+    })
+    
+    // Now sign the entire response with the assertion already signed
+    const responseWithSignedAssertion = assertionSig.getSignedXml()
+    
+    const responseSig = new SignedXml({
+      privateKey: IDP_PRIVATE_KEY
+    })
+    
+    responseSig.addReference({
+      xpath: `//*[@ID='${responseId}']`,
+      transforms: [
+        'http://www.w3.org/2000/09/xmldsig#enveloped-signature',
+        'http://www.w3.org/2001/10/xml-exc-c14n#'
+      ],
+      digestAlgorithm: 'http://www.w3.org/2001/04/xmlenc#sha256'
+    })
+    
+    responseSig.canonicalizationAlgorithm = 'http://www.w3.org/2001/10/xml-exc-c14n#'
+    responseSig.signatureAlgorithm = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
+    responseSig.keyInfoProvider = {
+      getKeyInfo: function (key, prefix) {
+        return `<X509Data><X509Certificate>${IDP_CERT.replace(/-----BEGIN CERTIFICATE-----|\n|-----END CERTIFICATE-----/g, '')}</X509Certificate></X509Data>`
+      }
+    }
+    
+    responseSig.computeSignature(responseWithSignedAssertion, {
+      location: { reference: `//*[@ID='${responseId}']/*[local-name()='Status']`, action: 'after' }
+    })
+    
+    // Return base64 encoded response with both response and assertion signed
+    return Buffer.from(responseSig.getSignedXml().trim()).toString('base64')
   } catch (error) {
     // If signing fails, return unsigned response for testing
     console.warn('Failed to sign SAML response, returning unsigned:', error.message)
