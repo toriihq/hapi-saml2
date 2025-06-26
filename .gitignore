@@ -15,3 +15,6 @@ node_modules/*
 
 # Jest
 coverage
+
+# Certs
+*.pem

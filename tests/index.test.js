@@ -2,13 +2,7 @@ const Hapi = require('@hapi/hapi')
 const Boom = require('@hapi/boom')
 const fs = require('node:fs')
 const path = require('node:path')
-const { SAML } = require('@node-saml/node-saml')
-
-jest.mock('@node-saml/node-saml', () => {
-  return {
-    ...jest.requireActual('@node-saml/node-saml')
-  }
-})
+const { IDP_CERT, createValidSAMLResponse } = require('./fixtures/saml-helper')
 
 const loginMockFn = jest.fn()
   .mockReturnValueOnce({ success: true })
@@ -46,9 +40,11 @@ describe('Hapi Plugin', () => {
     const sharedSAMLOptions = {
       callbackUrl: 'http://localhost:3000/callback',
       issuer: 'https://saml.example.com/',
-      idpCert: 'test-cert',
+      idpCert: IDP_CERT,
       entryPoint: 'http://localhost:3000/entryPoint',
-      generateUniqueId: () => 'uniqueId'
+      generateUniqueId: () => 'uniqueId',
+      wantAssertionsSigned: true,
+      wantAuthnResponseSigned: true
     }
     await serverForRedirect.register({
       plugin: require('hapi-saml2'),
@@ -233,49 +229,93 @@ describe('Hapi Plugin', () => {
     })
 
     describe('Handling result from the login function', () => {
-      const request = {
-        method: 'POST',
-        url: '/saml-test/callback',
-        payload: {
-          SAMLResponse: 'test'
-        }
-      }
-
-      beforeAll(() => {
-        SAML.prototype.validatePostResponseAsync = jest.fn().mockResolvedValue(Promise.resolve({ profile: 'test' }))
-      })
-
       it('should redirect to success page if login() return { success: true }', async () => {
+        const validSAMLResponse = createValidSAMLResponse()
+        const request = {
+          method: 'POST',
+          url: '/saml-test/callback',
+          payload: {
+            SAMLResponse: validSAMLResponse
+          }
+        }
         const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/success')
       })
 
       it('should redirect to success page if login() return string', async () => {
+        const validSAMLResponse = createValidSAMLResponse()
+        const request = {
+          method: 'POST',
+          url: '/saml-test/callback',
+          payload: {
+            SAMLResponse: validSAMLResponse
+          }
+        }
         const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/success')
       })
 
       it('should redirect to the default failure page if login() return null', async () => {
+        const validSAMLResponse = createValidSAMLResponse()
+        const request = {
+          method: 'POST',
+          url: '/saml-test/callback',
+          payload: {
+            SAMLResponse: validSAMLResponse
+          }
+        }
         const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/failure')
       })
 
       it('should redirect to failure page with message if login() return { success: false, errorMessage: String }', async () => {
+        const validSAMLResponse = createValidSAMLResponse()
+        const request = {
+          method: 'POST',
+          url: '/saml-test/callback',
+          payload: {
+            SAMLResponse: validSAMLResponse
+          }
+        }
         const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('https://www.example.com/?error=test-error-message')
       })
 
       it('should redirect to the default failure page if login() return { success: false }', async () => {
+        const validSAMLResponse = createValidSAMLResponse()
+        const request = {
+          method: 'POST',
+          url: '/saml-test/callback',
+          payload: {
+            SAMLResponse: validSAMLResponse
+          }
+        }
         const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/failure')
       })
 
       it('should redirect to the success page if login() return an object without success = false', async () => {
+        const validSAMLResponse = createValidSAMLResponse()
+        const request = {
+          method: 'POST',
+          url: '/saml-test/callback',
+          payload: {
+            SAMLResponse: validSAMLResponse
+          }
+        }
         const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/success')
       })
 
       it('should redirect to the failure page if login() === false', async () => {
+        const validSAMLResponse = createValidSAMLResponse()
+        const request = {
+          method: 'POST',
+          url: '/saml-test/callback',
+          payload: {
+            SAMLResponse: validSAMLResponse
+          }
+        }
         const response = await serverForRedirect.inject(request)
         expect(response.headers.location).toEqual('/failure')
       })
