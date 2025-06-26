@@ -89,10 +89,9 @@ They can be configured with `apiPrefix` option.
 
 ## Testing
 
-First, install the following dev-dependencies:
+Run the following script:
 ```
-yarn add -D @hapi/hapi
-yarn add -D @hapi/boom
+./prepare-for-tests.sh
 ```
 
-Then run `yarn test`. 
+Then run `yarn test` or `yarn test-ci`. 
