@@ -1,5 +1,8 @@
 # hapi-saml2 Changelog
 
+## Version 5.1.0
+- Upgrade to node-saml 5.1.0 to fix CVE-2025-54369
+
 ## Version 5.0.2
 - Upgrade to node-saml version 5.0.1
 - `cert` is now `idpCert`
