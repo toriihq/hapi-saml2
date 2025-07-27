@@ -15,7 +15,8 @@ Check the documentation of the repository for `options` documentation
 
 | hapi-saml2 version | dependency version         |
 |--------------------|----------------------------|
-| 5.0.2 - latest     | @node-saml/node-saml@5.0.1 |
+| 5.1.0 - latest     | @node-saml/node-saml@5.1.0 |
+| 5.0.2 - 5.0.2      | @node-saml/node-saml@5.0.1 |
 | 5.0.0 - 5.0.1      | @node-saml/node-saml@4.0.5 |
 | 4.0.5 - 4.0.7      | @node-saml/node-saml@4.0.5 |
 | 4.0.3 - 4.0.4      | @node-saml/node-saml@4.0.3 |
