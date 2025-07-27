@@ -17,7 +17,7 @@
 ## Version 4.0.7
 - Add support for `authnRequestBinding: 'HTTP-POST'` option
 
-## Version 4.0.6
+## Version 4.0.6    
 - Fix the results handling of the login function.
 
 ## Version 4.0.5
