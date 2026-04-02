@@ -52,7 +52,7 @@ const createValidSAMLResponse = (options = {}) => {
       </saml:AuthnContext>
     </saml:AuthnStatement>
     <saml:AttributeStatement>
-      ${Object.entries(attributes).map(([name, value]) => 
+      ${Object.entries(attributes).map(([name, value]) =>
         `<saml:Attribute Name="${name}">
            <saml:AttributeValue xsi:type="xs:string">${value}</saml:AttributeValue>
          </saml:Attribute>`
@@ -66,7 +66,7 @@ const createValidSAMLResponse = (options = {}) => {
     const assertionSig = new SignedXml({
       privateKey: IDP_PRIVATE_KEY
     })
-    
+
     assertionSig.addReference({
       xpath: `//*[@ID='${assertionId}']`,
       transforms: [
@@ -75,7 +75,7 @@ const createValidSAMLResponse = (options = {}) => {
       ],
       digestAlgorithm: 'http://www.w3.org/2001/04/xmlenc#sha256'
     })
-    
+
     assertionSig.canonicalizationAlgorithm = 'http://www.w3.org/2001/10/xml-exc-c14n#'
     assertionSig.signatureAlgorithm = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
     assertionSig.keyInfoProvider = {
@@ -83,18 +83,18 @@ const createValidSAMLResponse = (options = {}) => {
         return `<X509Data><X509Certificate>${IDP_CERT.replace(/-----BEGIN CERTIFICATE-----|\n|-----END CERTIFICATE-----/g, '')}</X509Certificate></X509Data>`
       }
     }
-    
+
     assertionSig.computeSignature(samlResponse, {
       location: { reference: `//*[@ID='${assertionId}']/*[local-name()='Issuer']`, action: 'after' }
     })
-    
+
     // Now sign the entire response with the assertion already signed
     const responseWithSignedAssertion = assertionSig.getSignedXml()
-    
+
     const responseSig = new SignedXml({
       privateKey: IDP_PRIVATE_KEY
     })
-    
+
     responseSig.addReference({
       xpath: `//*[@ID='${responseId}']`,
       transforms: [
@@ -103,7 +103,7 @@ const createValidSAMLResponse = (options = {}) => {
       ],
       digestAlgorithm: 'http://www.w3.org/2001/04/xmlenc#sha256'
     })
-    
+
     responseSig.canonicalizationAlgorithm = 'http://www.w3.org/2001/10/xml-exc-c14n#'
     responseSig.signatureAlgorithm = 'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'
     responseSig.keyInfoProvider = {
@@ -111,11 +111,11 @@ const createValidSAMLResponse = (options = {}) => {
         return `<X509Data><X509Certificate>${IDP_CERT.replace(/-----BEGIN CERTIFICATE-----|\n|-----END CERTIFICATE-----/g, '')}</X509Certificate></X509Data>`
       }
     }
-    
+
     responseSig.computeSignature(responseWithSignedAssertion, {
       location: { reference: `//*[@ID='${responseId}']/*[local-name()='Status']`, action: 'after' }
     })
-    
+
     // Return base64 encoded response with both response and assertion signed
     return Buffer.from(responseSig.getSignedXml().trim()).toString('base64')
   } catch (error) {
@@ -129,4 +129,4 @@ module.exports = {
   IDP_CERT,
   IDP_PRIVATE_KEY,
   createValidSAMLResponse
-} 
+}

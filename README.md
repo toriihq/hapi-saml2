@@ -90,9 +90,7 @@ They can be configured with `apiPrefix` option.
 
 ## Testing
 
-Run the following script:
 ```
 ./prepare-for-tests.sh
+yarn test-ci
 ```
-
-Then run `yarn test` or `yarn test-ci`. 

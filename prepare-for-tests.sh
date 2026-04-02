@@ -3,10 +3,8 @@
 # Exit on error
 set -e
 
-# Install dev dependencies
-yarn add -D @hapi/hapi
-yarn add -D @hapi/boom
-yarn add -D xml-crypto
+# Install peer dependencies needed for tests
+npm install --no-save @hapi/hapi @hapi/boom xml-crypto
 
 # Create the certs directory
 mkdir -p tests/fixtures/certs

@@ -1,14 +1,14 @@
 {
   "name": "hapi-saml2",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "SAML Auth for Hapi.js",
   "main": "./lib/index.js",
   "author": "Tal Bereznitskey <berzniz@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "jest --watch",
-    "test-ci": "jest --collect-coverage",
-    "standard": "standard"
+    "test": "npx jest@30 --watch",
+    "test-ci": "npx jest@30 --collect-coverage",
+    "standard": "npx standard@17"
   },
   "standard": {
     "env": [
@@ -20,10 +20,6 @@
   },
   "peerDependencies": {
     "@hapi/boom": ">=7.2.0"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "standard": "^17.1.0"
   },
   "repository": {
     "type": "git",
