@@ -1,5 +1,8 @@
 # hapi-saml2 Changelog
 
+## Version 5.1.2
+- Add `files` field to package.json to limit published package to `lib/` only
+
 ## Version 5.1.1
 - Remove jest and standard from devDependencies, use npx with pinned versions instead
 - Upgrade jest from 29 to 30 and standard from 17.1.0 to 17.1.2
