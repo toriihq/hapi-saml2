@@ -4,7 +4,7 @@
 set -e
 
 # Install peer dependencies needed for tests
-npm install --no-save @hapi/hapi @hapi/boom xml-crypto
+yarn add -D @hapi/hapi @hapi/boom xml-crypto
 
 # Create the certs directory
 mkdir -p tests/fixtures/certs
