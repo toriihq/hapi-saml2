@@ -1,5 +1,8 @@
 # hapi-saml2 Changelog
 
+## Version 5.1.3
+- Fix crash in SAML callback when the profile is null (e.g. NoPassive or LogoutResponse). Now redirects to `redirectUrlAfterFailure` instead of throwing a 500.
+
 ## Version 5.1.2
 - Add `files` field to package.json to limit published package to `lib/` only
 
